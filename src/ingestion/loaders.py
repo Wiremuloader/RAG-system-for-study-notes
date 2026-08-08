@@ -5,13 +5,16 @@ from pathlib import Path
 from langchain_community.document_loaders import PyPDFLoader
 
 
-def load_pdf_document(docs):
+def load_pdf_document(docs=None, pdf_path=None):
     """Load a PDF from the project data folder and return parsed documents.
 
     This uses PyPDFLoader with image extraction disabled because some scanned
     PDFs contain image streams that can break the parser.
     """
-    pdf_path = Path("data/raw/Yamakawa_Fuzzy_Engine_Analog_Mode_Fuzzy_Logic_Control.pdf")
+    if pdf_path is None:
+        pdf_path = Path("data/raw/Yamakawa_Fuzzy_Engine_Analog_Mode_Fuzzy_Logic_Control.pdf")
+    else:
+        pdf_path = Path(pdf_path)
 
     # The source PDF contains scanned-page images encoded as CCITT fax data.
     # The image-extraction path in this parser can fail on those images, so we

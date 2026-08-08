@@ -1,7 +1,6 @@
 """Helpers for splitting loaded documents into smaller text chunks."""
 
 from langchain_text_splitters import CharacterTextSplitter
-from loaders import load_pdf_document
 
 
 def chunk_pdf_document(docs):
@@ -19,10 +18,16 @@ def chunk_pdf_document(docs):
     )
 
     chunks = text_splitter.split_documents(docs)
-    
+
     print(f"Number of chunks created: {len(chunks)}")
-    print(chunks[0].page_content)
-    
+    if chunks:
+        print(chunks[0].page_content[:200])
+
+    return chunks
+
+
 if __name__ == "__main__":
+    from ingestion.loaders import load_pdf_document
+
     docs = load_pdf_document(None)
     chunk_pdf_document(docs)
