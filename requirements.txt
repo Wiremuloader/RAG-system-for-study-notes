@@ -1,0 +1,4 @@
+llama-index
+chromadb
+sentence-transformers
+streamlit
