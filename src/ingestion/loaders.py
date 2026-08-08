@@ -1,11 +1,15 @@
+"""Utilities for loading PDF files into LangChain documents."""
+
 from pathlib import Path
 
 from langchain_community.document_loaders import PyPDFLoader
 
 
 def load_pdf_document(docs):
-    """
-    Load a PDF document using PyPDFLoader and return the loaded documents.
+    """Load a PDF from the project data folder and return parsed documents.
+
+    This uses PyPDFLoader with image extraction disabled because some scanned
+    PDFs contain image streams that can break the parser.
     """
     pdf_path = Path("data/raw/Yamakawa_Fuzzy_Engine_Analog_Mode_Fuzzy_Logic_Control.pdf")
 

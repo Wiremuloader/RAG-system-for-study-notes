@@ -1,14 +1,15 @@
-"""
-Chunking methods:
-fixed-size *
-recursive chunking
-semantic chunking
-"""
+"""Helpers for splitting loaded documents into smaller text chunks."""
 
 from langchain_text_splitters import CharacterTextSplitter
 from loaders import load_pdf_document
 
+
 def chunk_pdf_document(docs):
+    """Split documents into smaller chunks for embedding and retrieval.
+
+    The splitter uses a fixed-size character window with overlap so chunks
+    remain manageable while preserving some surrounding context.
+    """
     text_splitter = CharacterTextSplitter(
         separator="",
         chunk_size=500,
