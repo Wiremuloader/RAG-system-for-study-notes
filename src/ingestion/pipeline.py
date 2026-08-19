@@ -19,23 +19,35 @@ def build_embeddings(chunks):
 
 
 def ingest_pdf_to_chroma(pdf_path=None, collection_name: str = "study-notes"):
-    if pdf_path is None:
-        pdf_path = str(Path("data/raw") / "Yamakawa_Fuzzy_Engine_Analog_Mode_Fuzzy_Logic_Control.pdf")
-
-    docs = load_pdf_document(None, pdf_path=pdf_path)
-    chunks = chunk_pdf_document(docs)
-    embeddings = build_embeddings(chunks)
+    if pdf_path is not None:
+        pdf_paths = [Path(pdf_path)]
+    else:
+        raw_dir = Path("data/raw")
+        pdf_paths = sorted(raw_dir.glob("*.pdf"))
+        if not pdf_paths:
+            print(f"No PDF files found in {raw_dir}")
+            return None
 
     collection = get_collection(collection_name, recreate=True)
-    ids = [f"chunk-{i}" for i in range(len(chunks))]
 
-    collection.upsert(
-        ids=ids,
-        embeddings=embeddings.tolist(),
-        documents=[chunk.page_content for chunk in chunks],
-    )
+    for path in pdf_paths:
+        docs = load_pdf_document(None, pdf_path=path)
+        if not docs:
+            continue
+        chunks = chunk_pdf_document(docs)
+        if not chunks:
+            continue
+        embeddings = build_embeddings(chunks)
+        ids = [f"{path.stem}-chunk-{i}" for i in range(len(chunks))]
 
-    print(f"Inserted {collection.count()} documents into collection '{collection_name}'.")
+        collection.upsert(
+            ids=ids,
+            embeddings=embeddings.tolist(),
+            documents=[chunk.page_content for chunk in chunks],
+            metadatas=[{"source": path.name} for _ in chunks],
+        )
+
+    print(f"Inserted {collection.count()} documents into collection '{collection_name}' from {len(pdf_paths)} file(s).")
     return collection
 
 

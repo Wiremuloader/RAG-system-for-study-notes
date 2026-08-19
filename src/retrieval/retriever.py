@@ -19,12 +19,14 @@ def query_chroma(question: str, top_k: int =5, collection_name: str = "study-not
     results = collection.query(
         query_embeddings=[query_embedding.tolist()],
         n_results=top_k,
-        include=["documents", "distances"]
+        include=["documents", "distances", "metadatas"]
     )
     
     docs = results["documents"][0]
-    distance = results["distances"][0]
+    distances = results["distances"][0]
+    metadatas = results["metadatas"][0]
     
     return [
-        {"document": doc, "distance": dist} for doc, dist in zip(docs, distance)
+        {"document": doc, "distance": dist, "source": meta.get("source")}
+        for doc, dist, meta in zip(docs, distances, metadatas)
     ]
