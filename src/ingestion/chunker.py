@@ -1,18 +1,20 @@
 """Helpers for splitting loaded documents into smaller text chunks."""
 
-from langchain_text_splitters import CharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 def chunk_pdf_document(docs):
     """Split documents into smaller chunks for embedding and retrieval.
 
-    The splitter uses a fixed-size character window with overlap so chunks
-    remain manageable while preserving some surrounding context.
+    Uses a recursive splitter that prefers to break on paragraph/sentence/word
+    boundaries before falling back to a hard character cut, and a larger
+    chunk size so each chunk captures a coherent slide/section instead of an
+    arbitrary 500-character slice.
     """
-    text_splitter = CharacterTextSplitter(
-        separator="",
-        chunk_size=500,
-        chunk_overlap=50,
+    text_splitter = RecursiveCharacterTextSplitter(
+        separators=["\n\n", "\n", ". ", " ", ""],
+        chunk_size=800,
+        chunk_overlap=120,
         length_function=len,
         is_separator_regex=False
     )

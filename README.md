@@ -61,13 +61,20 @@ pip install -r requirements.txt
    ```powershell
    python scripts/ingest_notes.py
    ```
-   Re-running this fully rebuilds the `study-notes` collection from whatever PDFs currently exist in `data/raw/`.
+   Ingestion is incremental: a manifest at `data/processed/ingested_manifest.json` tracks a hash per file, so re-running this only (re-)processes new or changed PDFs instead of wiping and rebuilding the whole collection. Options:
+   - `--source <folder-or-file>` — ingest a specific folder or single PDF instead of `data/raw/`.
+   - `--force` — re-ingest every matched file even if unchanged.
+   - `--collection <name>` — target a different Chroma collection.
+
+   You can also add lecture PDFs directly from the Streamlit sidebar (see below) instead of the CLI — it saves the upload to `data/raw/` and re-runs the same incremental ingestion.
+
+   To fully wipe the vector store and manifest (e.g. after a bad ingest), run `python scripts/reset_db.py`.
 
 ## Running the app
 ```powershell
 streamlit run app/streamlit_app.py
 ```
-This opens a chat interface at `http://localhost:8501`. Ask a question about your slides; each answer is generated only from the retrieved chunks, and the exact chunks used (with source filename and similarity distance) are shown in a collapsible "Sources" section underneath the answer so you can verify grounding.
+This opens a chat interface at `http://localhost:8501`. Ask a question about your slides; each answer is generated only from the retrieved chunks, and the exact chunks used (with source filename, similarity distance, and reranker score) are shown in a collapsible "Sources" section underneath the answer so you can verify grounding. The sidebar also lets you upload new PDF slides directly, which are saved into `data/raw/` and ingested on the spot.
 
 Make sure Ollama is running locally (`ollama serve`, or it's already running as a background service) before asking questions, since generation calls `http://localhost:11434`.
 
@@ -80,6 +87,8 @@ This runs a handful of hardcoded questions through `query_chroma()` and prints t
 
 ## Configuration notes
 - The embedding model (`all-MiniLM-L6-v2`) is shared between ingestion and retrieval — if you change one, change both, otherwise similarity scores become meaningless.
+- Chunking uses `RecursiveCharacterTextSplitter` (`src/ingestion/chunker.py`) with `chunk_size=800` / `chunk_overlap=120`, preferring paragraph/sentence/word boundaries over a hard character cut. Changing chunk size requires re-ingesting with `--force` (or `reset_db.py` + re-ingest) to take effect on already-ingested files.
+- Retrieval can optionally rerank vector-similarity candidates with a cross-encoder (`cross-encoder/ms-marco-MiniLM-L-6-v2`, see `src/retrieval/reranker.py`) via `query_chroma(..., use_reranker=True)`. `rag_chain.answer_question()` enables this by default since embedding distance alone was found to be a noisy relevance signal, especially after enlarging chunk size. Reranking over-fetches `top_k * 4` candidates by vector similarity before rescoring, so it costs a bit more latency for meaningfully better ordering.
 - The default LLM model used by `src/generation/llm_client.py` is `qwen2.5:7b-instruct`. Change `DEFAULT_MODEL` in that file (or pass `model=` to `generate()`) to use a different locally-installed Ollama model.
 - `config.yaml` is currently unused; it's reserved for future externalized configuration (model names, chunk sizes, etc).
 

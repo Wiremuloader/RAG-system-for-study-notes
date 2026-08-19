@@ -11,7 +11,7 @@ from generation.llm_client import generate
 
 
 def answer_question(question: str, top_k: int = 5) -> dict:
-    chunks = query_chroma(question, top_k=top_k)
+    chunks = query_chroma(question, top_k=top_k, use_reranker=True)
     prompt = build_prompt(question, chunks)
     answer = generate(prompt)
     return {"answer": answer, "chunks": chunks}
